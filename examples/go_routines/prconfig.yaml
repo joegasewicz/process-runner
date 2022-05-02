@@ -1,0 +1,10 @@
+processes:
+  go1:
+    directory: examples/go_routines
+    command: ./go_routines1
+  go2:
+    directory: examples/go_routines
+    command: ./go_routines2
+  go3:
+    directory: examples/go_routines
+    command: ./go_routines3
