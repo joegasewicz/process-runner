@@ -3,3 +3,4 @@ process_runner
 examples/go_routines/go_routines1
 examples/go_routines/go_routines2
 examples/go_routines/go_routines3
+examples/**/node_modules
