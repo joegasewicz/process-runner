@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	time.Sleep(50 * time.Second)
+	time.Sleep(5 * time.Second)
 	fmt.Println("I'm #3 process!")
 }

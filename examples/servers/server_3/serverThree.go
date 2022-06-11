@@ -10,6 +10,7 @@ const (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Server 3")
 	fmt.Fprintf(w, "Server 3")
 }
 
