@@ -2,4 +2,4 @@ processes:
   sass:
     directory: examples/frontend
     command: sass
-    args: ["sass/index.scss", "css/index.css"]
+    args: ["--watch", "sass/index.scss", "css/index.css"]

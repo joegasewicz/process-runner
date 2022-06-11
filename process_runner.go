@@ -61,7 +61,12 @@ func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	if dir != "" {
 		testCmd.Dir = processes[index].Directory
 	}
-	out, err := testCmd.Output()
+	var out []byte
+	var err error
+	// https://stackoverflow.com/questions/61491295/how-to-stream-command-outputs-with-a-channel
+
+	out, err = testCmd.Output()
+
 	if err != nil {
 		if err.Error() == "exit status 127" {
 			errMsg := fmt.Sprintf("Unknown command: %s Is this file executable?", processes[index].Command)
@@ -71,7 +76,7 @@ func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 		return
 	}
 	if len(out) < 1 {
-		out = []byte("\n")
+		out = []byte("\n\n")
 	}
 	// logging TODO use templates
 	fmt.Printf(

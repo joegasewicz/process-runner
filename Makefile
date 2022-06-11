@@ -6,3 +6,6 @@ frontend:
 
 sass:
 	sass
+
+servers:
+	go run process_runner.go -dir examples/servers

@@ -1,5 +1,8 @@
 body {
   color: red;
+  background-color: blueviolet;
+  z-index: 1;
+  font-family: "sans-serif";
 }
 
 /*# sourceMappingURL=index.css.map */

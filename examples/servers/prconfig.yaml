@@ -1,0 +1,13 @@
+processes:
+  server_1:
+    directory: examples/servers/server_1
+    command: go
+    args: ["run", "serverOne.go"]
+  server_2:
+    directory: examples/servers/server_2
+    command: go
+    args: ["run", "serverTwo.go"]
+  server_3:
+    directory: examples/servers/server_3
+    command: go
+    args: ["run", "serverThree.go"]
