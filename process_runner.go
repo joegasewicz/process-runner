@@ -113,7 +113,7 @@ func createProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	processes[index].State = STATE_STARTING
 	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 	// Command
-	cmd := exec.CommandContext(ctx, processes[index].Command, processes[index].Args...)
+	cmd := exec.Command(processes[index].Command, processes[index].Args...)
 	// Env
 	envVars := os.Environ()
 	for k, v := range processes[index].Env {
@@ -159,7 +159,7 @@ func createProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	// Start process command
 	err = cmd.Start()
 	<-done
-	cmd.Wait()
+	err = cmd.Wait()
 	// Errors
 	if err != nil {
 		if err.Error() == "exit status 127" {
@@ -170,10 +170,16 @@ func createProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 			log.Fatal(errMsg)
 		}
 		log.Fatalf(
-			"[process-runner] Error for process %s\n[process-runner] Full Error: %s",
-			processes[index].Name, err.Error())
+			"%s %s\n%s %s",
+			aurora.Red("[process-runner] Error for process"),
+			aurora.Red(processes[index].Name),
+			aurora.Red("[process-runner] Full Error:"),
+			aurora.Red(err.Error()),
+		)
 		return
 	}
+	processes[index].State = STATE_COMPLETED
+	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 }
 
 func main() {
@@ -206,6 +212,20 @@ func main() {
 			}
 		}
 	}()
+
+	var userInput string
+	for {
+		fmt.Scanln(&userInput)
+		if userInput != "" {
+			if userInput == "l" {
+				// list processes
+				fmt.Printf("")
+			} else {
+				// Show options
+			}
+		}
+		time.Sleep(time.Millisecond * 500)
+	}
 	wg.Wait()
 	// If we reach this point it means there are no running processes left
 	log.Printf(

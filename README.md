@@ -20,6 +20,8 @@ processes:
 ```bash
 go run process_runner.go -dir examples/<DIR WITH prconfig.yaml>
 ```
+If any process exists unexpectedly, then process-runner will exit with the error details for that process.
+
 ### `prconfig` Config
 - **processes**
     
