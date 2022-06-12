@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -10,7 +11,8 @@ const (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Server 3")
+	//fmt.Println("Server 3")
+	log.Panic("PANIC: Error server 3")
 	fmt.Fprintf(w, "Server 3")
 }
 
