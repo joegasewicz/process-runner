@@ -7,4 +7,3 @@ examples/servers/server_1/server_1
 examples/servers/server_2/server_2
 examples/servers/server_3/server_3
 examples/**/node_modules
-prconfig.yaml
