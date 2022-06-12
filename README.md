@@ -16,6 +16,10 @@ processes:
       SERVER_NAME: "Columbo"
   
 ```
+### Run all processes
+```bash
+go run process_runner.go -dir examples/<DIR WITH pcconfig.yaml>
+```
 ### `prconfig` Config
 - **processes**
     
