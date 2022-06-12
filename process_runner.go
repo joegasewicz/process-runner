@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
@@ -17,12 +18,19 @@ const (
 	configFileName = "prconfig.yaml"
 )
 
+const (
+	STATE_STARTING  = "starting"
+	STATE_RUNNING   = "running"
+	STATE_COMPLETED = "completed"
+)
+
 type Process struct {
 	ID        int
 	Name      string
 	Directory string
 	Command   string
 	Args      []string
+	State     string
 }
 
 type ProcessYAML struct {
@@ -64,59 +72,71 @@ func UnMarshalYAML(processes *[]Process, dir string) error {
 }
 
 func logProcessStdOut(p Process, out string, err string) {
-	fmt.Printf(
-		"[%s] Process: (%d)\n\tname: %s\n\tdirectory: %s\n\toutput: %s\n\terror: %s\n",
-		time.Now().Format("15:01:05"),
+	log.Printf(
+		"[%s] Process: (%d)\n\t   name: %s\n\t   directory: %s\n\t   output: %s\n\t   error: %s\n\t   state: %s\n",
+		aurora.Green(time.Now().Format("15:01:05")),
 		aurora.Blue(p.ID),
 		aurora.Blue(p.Name),
 		aurora.Blue(p.Directory),
 		aurora.Blue(out),
 		aurora.Blue(err),
+		aurora.Blue(p.State),
 	)
 }
 
+func sendStdOutToChannel(c chan ProcessOutput, p *Process, i int, o, e string) {
+	c <- ProcessOutput{
+		Process: p,
+		Out:     o,
+		Index:   i,
+		Error:   e,
+	}
+}
+
 // CreateProcess creates a single process
-func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir string, logChan chan ProcessOutput) {
+func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir string, logChan chan ProcessOutput, ctx context.Context) {
 	var out string
 	var stderrMsg string
 	var err error
 	defer _wg.Done()
 	processes[index].ID = index
+	processes[index].State = STATE_STARTING
+	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 	// Command
-	cmd := exec.Command(processes[index].Command, processes[index].Args...)
+	cmd := exec.CommandContext(ctx, processes[index].Command, processes[index].Args...)
 	if dir != "" {
 		cmd.Dir = processes[index].Directory
 	}
+	// Output
+	processes[index].State = STATE_RUNNING
+	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
+
 	stdout, err := cmd.StdoutPipe()
-	stderr, err := cmd.StderrPipe()
+
+	// stdout
+	stdoutScanner := bufio.NewScanner(stdout)
+	stdoutScanner.Split(bufio.ScanLines)
 
 	err = cmd.Start()
 
-	errScanner := bufio.NewScanner(stdout)
-	errScanner.Split(bufio.ScanWords)
-	stdoutScanner := bufio.NewScanner(stderr)
-	stdoutScanner.Split(bufio.ScanWords)
 	for stdoutScanner.Scan() {
-		m := stdoutScanner.Text()
-		out += m
+		out += stdoutScanner.Text() + " "
+		if len(out) > 0 {
+			// Remove the last space
+			out = out[:len(out)-1]
+			sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
+			out = ""
+		}
 	}
-	for errScanner.Scan() {
-		e := errScanner.Text()
-		stderrMsg += e
 
-	}
-	// Output
-	logChan <- ProcessOutput{
-		Process: &processes[index],
-		Out:     out,
-		Index:   index,
-		Error:   stderrMsg,
-	}
-	err = cmd.Wait()
+	cmd.Wait()
 	// Errors
 	if err != nil {
 		if err.Error() == "exit status 127" {
-			errMsg := fmt.Sprintf("Unknown command: %s Is this file executable?\n", processes[index].Command)
+			errMsg := fmt.Sprintf(
+				"Unknown command: %s Is this file executable?\n",
+				processes[index].Command,
+			)
 			log.Fatal(errMsg)
 		}
 		log.Fatal(err)
@@ -130,9 +150,9 @@ func main() {
 	var dir string
 	var processes []Process
 	var wg sync.WaitGroup
-	//var hasQuit bool
-	//var userOption string
+	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	var logChan chan ProcessOutput = make(chan ProcessOutput)
+	defer cancel()
 	// Flags
 	flag.StringVar(&dir, "dir", "", "directory to run the process from")
 	flag.Parse()
@@ -142,9 +162,9 @@ func main() {
 		log.Fatal(err)
 	}
 	// Run processes
-	wg.Add(len(processes))
+	wg.Add(len(processes) * 2)
 	for i := 0; i < len(processes); i++ {
-		go CreateProcess(&wg, i, processes, dir, logChan)
+		go CreateProcess(&wg, i, processes, dir, logChan, ctx)
 	}
 
 	go func() {
@@ -155,14 +175,10 @@ func main() {
 			}
 		}
 	}()
-	// Wait for user inputs
-	//for !hasQuit {
-	//	fmt.Println("Ready:")
-	//	fmt.Scanln(&userOption)
-	//	fmt.Println("Entered: ", userOption)
-	//	time.Sleep(100 * time.Millisecond)
-	//}
 	wg.Wait()
 	// If we reach this point it means there are no running processes left
-	log.Printf("\n[%s] All running processes started...\n", time.Now().Format("15:01:05"))
+	log.Printf(
+		"\n[%s] All running processes stopped\n",
+		aurora.Green(time.Now().Format("15:01:05")),
+	)
 }
