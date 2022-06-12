@@ -9,6 +9,10 @@ processes:
     directory: examples/frontend
     command: sass
     args: ["sass/index.scss", "css/index.css", "--watch"]
+  bash:
+    directory:  examples/bash
+    command: ./test.sh
+  
 ```
 ### `prconfig` Config
 - **processes**
