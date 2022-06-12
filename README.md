@@ -12,6 +12,8 @@ processes:
   bash:
     directory:  examples/bash
     command: ./test.sh
+    env:
+      SERVER_NAME: "Columbo"
   
 ```
 ### `prconfig` Config
@@ -30,6 +32,10 @@ processes:
 - **args**
     
     The command arguments as an array e.g `["-t", "-o"]`
+- **env**
+
+    Sets environment variables for the process.
+
 
 ### Run multiple MUX Go Servers
 ```yaml

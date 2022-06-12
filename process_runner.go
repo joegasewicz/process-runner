@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -31,13 +32,15 @@ type Process struct {
 	Command   string
 	Args      []string
 	State     string
+	Env       map[string]string
 }
 
 type ProcessYAML struct {
-	Directory string   `yaml:"directory"`
-	Command   string   `yaml:"command"`
-	Args      []string `yaml:"args"`
-	Port      int8     `yaml:"port"`
+	Directory string            `yaml:"directory"`
+	Command   string            `yaml:"command"`
+	Args      []string          `yaml:"args"`
+	Port      int8              `yaml:"port"`
+	Env       map[string]string `yaml:"env"`
 }
 
 type ProcessesYAML struct {
@@ -51,8 +54,8 @@ type ProcessOutput struct {
 	Error   string
 }
 
-// UnMarshalYAML takes a pointer to []Process & generates values from a `prconfig.yaml` file
-func UnMarshalYAML(processes *[]Process, dir string) error {
+// unMarshalYAML takes a pointer to []Process & generates values from a `prconfig.yaml` file
+func unMarshalYAML(processes *[]Process, dir string) error {
 	var err error
 	configFile := fmt.Sprintf("%s/%s", dir, configFileName)
 	yamlFile, err := ioutil.ReadFile(configFile)
@@ -65,6 +68,7 @@ func UnMarshalYAML(processes *[]Process, dir string) error {
 			Directory: v.Directory,
 			Command:   v.Command,
 			Args:      v.Args,
+			Env:       v.Env,
 		}
 		*processes = append(*processes, newProcess)
 	}
@@ -93,63 +97,62 @@ func sendStdOutToChannel(c chan ProcessOutput, p *Process, i int, o, e string) {
 	}
 }
 
-// CreateProcess creates a single process
-func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir string, logChan chan ProcessOutput, ctx context.Context) {
-	var out string
-	var stderrMsg string
-	var err error
-	var done = make(chan struct{})
+func createProcess(_wg *sync.WaitGroup, index int, processes []Process, dir string, logChan chan ProcessOutput, ctx context.Context) {
+	var (
+		out       string
+		stderrMsg string
+		err       error
+		done      = make(chan struct{})
+	)
 	defer _wg.Done()
 	processes[index].ID = index
 	processes[index].State = STATE_STARTING
 	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 	// Command
 	cmd := exec.CommandContext(ctx, processes[index].Command, processes[index].Args...)
+	// Env
+	envVars := os.Environ()
+	for k, v := range processes[index].Env {
+		envVars = append(envVars, fmt.Sprintf("%s=%v", k, v))
+	}
+	cmd.Env = envVars
+	// Set dir
 	if dir != "" {
 		cmd.Dir = processes[index].Directory
 	}
 	// Output
 	processes[index].State = STATE_RUNNING
 	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
-
 	stdout, err := cmd.StdoutPipe()
 	stderr, err := cmd.StderrPipe()
-
 	// stdout
 	stdoutScanner := bufio.NewScanner(stdout)
 	stdoutScanner.Split(bufio.ScanLines)
 	// stderr
 	stderrScanner := bufio.NewScanner(stderr)
 	stderrScanner.Split(bufio.ScanLines)
-
+	// Update log chan
 	go func() {
 		for stdoutScanner.Scan() {
-			out += stdoutScanner.Text() + " "
-			if len(out) > 0 {
-				// Remove the last space
-				out = out[:len(out)-1]
-				if out != "" {
-					sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
-					out = ""
-				}
+			out += stdoutScanner.Text()
+			if out != "" {
+				sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
+				out = ""
 			}
 		}
 		done <- struct{}{}
 	}()
-
 	go func() {
 		for stderrScanner.Scan() {
 			stderrMsg += stderrScanner.Text()
-
 			if stderrMsg != "" {
 				sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 				stderrMsg = ""
 			}
-
 		}
 		done <- struct{}{}
 	}()
-
+	// Start process command
 	err = cmd.Start()
 	<-done
 	cmd.Wait()
@@ -165,7 +168,6 @@ func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 		log.Fatal(err)
 		return
 	}
-
 }
 
 func main() {
@@ -180,14 +182,14 @@ func main() {
 	flag.StringVar(&dir, "dir", "", "directory to run the process from")
 	flag.Parse()
 	// Marshal yaml
-	err = UnMarshalYAML(&processes, dir)
+	err = unMarshalYAML(&processes, dir)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Run processes
 	wg.Add(len(processes) * 2)
 	for i := 0; i < len(processes); i++ {
-		go CreateProcess(&wg, i, processes, dir, logChan, ctx)
+		go createProcess(&wg, i, processes, dir, logChan, ctx)
 	}
 
 	go func() {

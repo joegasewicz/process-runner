@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
 
 const (
@@ -15,8 +16,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	serverName := os.Getenv("SERVER_NAME")
 	hostAndPort := fmt.Sprintf("localhost:%d", PORT)
 	http.HandleFunc("/", handler)
 	fmt.Printf("Server running on http://%s\n", hostAndPort)
+	fmt.Printf("Server name:%s\n", serverName)
 	http.ListenAndServe(hostAndPort, nil)
 }

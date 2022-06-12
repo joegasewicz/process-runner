@@ -7,6 +7,8 @@ processes:
     directory: examples/servers/server_2
     command: go
     args: ["run", "serverTwo.go"]
+    env:
+      SERVER_NAME: "Columbo"
   server_3:
     directory: examples/servers/server_3
     command: go
