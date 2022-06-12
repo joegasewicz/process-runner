@@ -2,8 +2,7 @@
 Runs many processes
 
 ### Config
-Create a `prconfig.yaml`
-
+Create a `prconfig.yaml` file. NAme a process & add the relevant commands and arguments.
 ```yaml
 processes:
   sass:
