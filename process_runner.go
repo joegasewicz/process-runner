@@ -59,6 +59,10 @@ func unMarshalYAML(processes *[]Process, dir string) error {
 	var err error
 	configFile := fmt.Sprintf("%s/%s", dir, configFileName)
 	yamlFile, err := ioutil.ReadFile(configFile)
+	if string(yamlFile) == "" {
+		panic("No prconfig.yaml found")
+	}
+
 	var p ProcessesYAML
 	err = yaml.Unmarshal(yamlFile, &p)
 	// Add processes
@@ -83,7 +87,7 @@ func logProcessStdOut(p Process, out string, err string) {
 		aurora.Blue(p.Name),
 		aurora.Blue(p.Directory),
 		aurora.Blue(out),
-		aurora.Blue(err),
+		aurora.Red(err),
 		aurora.Blue(p.State),
 	)
 }
@@ -160,12 +164,14 @@ func createProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	if err != nil {
 		if err.Error() == "exit status 127" {
 			errMsg := fmt.Sprintf(
-				"Unknown command: %s Is this file executable?\n",
+				"[process-runner] Error: Unknown command: %s Is this file executable?\n",
 				processes[index].Command,
 			)
 			log.Fatal(errMsg)
 		}
-		log.Fatal(err)
+		log.Fatalf(
+			"[process-runner] Error for process %s\n[process-runner] Full Error: %s",
+			processes[index].Name, err.Error())
 		return
 	}
 }
@@ -179,7 +185,7 @@ func main() {
 	var logChan chan ProcessOutput = make(chan ProcessOutput)
 	defer cancel()
 	// Flags
-	flag.StringVar(&dir, "dir", "", "directory to run the process from")
+	flag.StringVar(&dir, "dir", "", "relative path to directory that contains a prconfig.yaml file")
 	flag.Parse()
 	// Marshal yaml
 	err = unMarshalYAML(&processes, dir)

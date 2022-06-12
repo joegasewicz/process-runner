@@ -18,7 +18,7 @@ processes:
 ```
 ### Run all processes
 ```bash
-go run process_runner.go -dir examples/<DIR WITH pcconfig.yaml>
+go run process_runner.go -dir examples/<DIR WITH prconfig.yaml>
 ```
 ### `prconfig` Config
 - **processes**
@@ -29,7 +29,7 @@ go run process_runner.go -dir examples/<DIR WITH pcconfig.yaml>
     This is the process name you want to assign (it can be any string)
 - **directory**
     
-    The relative directory the process will be run from
+    The relative or absolute path to the directory that the process will be run from
 - **command**
 
     The command that will be run eg. go, ./<exc>, make ... .etc
