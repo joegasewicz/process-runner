@@ -72,7 +72,7 @@ func UnMarshalYAML(processes *[]Process, dir string) error {
 }
 
 func logProcessStdOut(p Process, out string, err string) {
-	log.Printf(
+	fmt.Printf(
 		"[%s] Process: (%d)\n\t   name: %s\n\t   directory: %s\n\t   output: %s\n\t   error: %s\n\t   state: %s\n",
 		aurora.Green(time.Now().Format("15:01:05")),
 		aurora.Blue(p.ID),

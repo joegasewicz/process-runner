@@ -48,13 +48,4 @@ processes:
 ### Example Output
 This example logs to std output a Go's mux server's logs / std output
 
-```bash
-[01:06:39] Process: (0)
-           name: server_1
-           directory: examples/servers/server_1
-           output: Server running on http://localhost:2001
-           error: 
-           state: running
-[01:06:39] Process: (1)
-          ... .etc
-```
+![Process Runner Log Example](imgs/log_1.png?raw=true)
