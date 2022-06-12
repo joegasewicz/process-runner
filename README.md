@@ -1,7 +1,7 @@
 # Process Runner
 Runs many processes
 
-## Config
+### Config
 Create a `prconfig.yaml`
 
 ```yaml
