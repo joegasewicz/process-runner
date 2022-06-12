@@ -98,6 +98,7 @@ func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	var out string
 	var stderrMsg string
 	var err error
+	var done = make(chan struct{})
 	defer _wg.Done()
 	processes[index].ID = index
 	processes[index].State = STATE_STARTING
@@ -112,23 +113,45 @@ func CreateProcess(_wg *sync.WaitGroup, index int, processes []Process, dir stri
 	sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
 
 	stdout, err := cmd.StdoutPipe()
+	stderr, err := cmd.StderrPipe()
 
 	// stdout
 	stdoutScanner := bufio.NewScanner(stdout)
 	stdoutScanner.Split(bufio.ScanLines)
+	// stderr
+	stderrScanner := bufio.NewScanner(stderr)
+	stderrScanner.Split(bufio.ScanLines)
+
+	go func() {
+		for stdoutScanner.Scan() {
+			out += stdoutScanner.Text() + " "
+			if len(out) > 0 {
+				// Remove the last space
+				out = out[:len(out)-1]
+				if out != "" {
+					sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
+					out = ""
+				}
+			}
+		}
+		done <- struct{}{}
+	}()
+
+	go func() {
+		for stderrScanner.Scan() {
+			stderrMsg += stderrScanner.Text()
+
+			if stderrMsg != "" {
+				sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
+				stderrMsg = ""
+			}
+
+		}
+		done <- struct{}{}
+	}()
 
 	err = cmd.Start()
-
-	for stdoutScanner.Scan() {
-		out += stdoutScanner.Text() + " "
-		if len(out) > 0 {
-			// Remove the last space
-			out = out[:len(out)-1]
-			sendStdOutToChannel(logChan, &processes[index], index, out, stderrMsg)
-			out = ""
-		}
-	}
-
+	<-done
 	cmd.Wait()
 	// Errors
 	if err != nil {
