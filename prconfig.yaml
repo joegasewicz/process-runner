@@ -1,54 +1,54 @@
 processes:
   dp-compose:
-    directory: /Users/josefgasewicz/Work/ONSdigital/dp-compose
+    directory: /Users/$USER/Work/ONSdigital/dp-compose
     command:  ./run.sh
   dp-identity-api:
-    directory: /Users/josefgasewicz/Work/PublishingJourney/dp-identity-api
+    directory: /Users/$USER/Work/PublishingJourney/dp-identity-api
     command: make
     args: ["debug"]
     env:
       MallocNanoZone: 0
   dp-api-router:
-    directory: /Users/josefgasewicz/Work/PublishingJourney/dp-api-router
+    directory: /Users/$USER/Work/PublishingJourney/dp-api-router
     command: make
     args: ["debug"]
     env:
       MallocNanoZone: 0
 #  dp-permissions-api:
-#    directory: /Users/josefgasewicz/Work/PublishingJourney/dp-permissions-api
+#    directory: /Users/$USER/Work/PublishingJourney/dp-permissions-api
 #    command: make
 #    args: [ "debug" ]
 #    env:
 #      MallocNanoZone:
   dp-frontend-renderer:
-    directory: /Users/josefgasewicz/Work/WebJourney/dp-frontend-renderer
+    directory: /Users/$USER/Work/WebJourney/dp-frontend-renderer
     command: make
     args: ["debug"]
     env:
       MallocNanoZone: 0
   dp-frontend-homepage-controller:
-    directory: /Users/josefgasewicz/Work/WebJourney/dp-frontend-cookie-controller
+    directory: /Users/$USER/Work/WebJourney/dp-frontend-cookie-controller
     command: make
     args: ["debug"]
   sixteens:
-    directory: /Users/josefgasewicz/Work/WebJourney/sixteens
+    directory: /Users/$USER/Work/WebJourney/sixteens
     command: ./run.sh
   dp-frontend-cookie-controller:
-    directory: /Users/josefgasewicz/Work/WebJourney/dp-frontend-cookie-controller
+    directory: /Users/$USER/Work/WebJourney/dp-frontend-cookie-controller
     command: make
     args: ["debug"]
     env:
       MallocNanoZone: 0
   babbage:
-    directory: /Users/josefgasewicz/Work/PublishingJourney/babbage
+    directory: /Users/$USER/Work/PublishingJourney/babbage
     command: ./run-publishing.sh
   zebedee:
-    directory: /Users/josefgasewicz/Work/WebJourney/zebedee
+    directory: /Users/$USER/Work/WebJourney/zebedee
     command: ./run.sh
     env:
       ENABLE_JWT_SESSIONS: false
   florence:
-    directory: /Users/josefgasewicz/Work/PublishingJourney/florence
+    directory: /Users/$USER/Work/PublishingJourney/florence
     command: make
     args: [ "debug" ]
     env:
